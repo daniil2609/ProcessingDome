@@ -104,98 +104,6 @@ void exportToOBJ(String filename) {
 }
 
 
-// Рабочий метод с нормалями:
-/*
-void exportToOBJ(String filename) {
-  try {
-    String folderPath = sketchPath("output"); // Путь к папке output в корне проекта
-    File outputFolder = new File(folderPath);
-
-    // Проверяем, существует ли папка, и создаем ее, если нет
-    if (!outputFolder.exists()) {
-      outputFolder.mkdirs();
-    }
-
-    // Полный путь к файлу с именем filename в папке output
-    String filePath = folderPath + "/" + filename + ".obj";
-    PrintWriter output = createWriter(filePath);
-    output.println("# params: \n" + 
-                  "# detail: " + detail + "\n" + 
-                  "# cutoff: " + cutoff + "\n" +  
-                  "# radius: " + radius + "\n"  +  
-                  "# polyhedronType: " + polyhedronType + "\n" +  
-                  "# showEdges: " + showEdges + "\n" +  
-                  "# smoothEdges: " + smoothEdges + "\n" + "\n"
-                  );
-
-    int vertexIndex = 1; // Индекс для каждой вершины в файле .obj
-    int normalIndex = 1; // Индекс для каждой нормали
-
-    HashMap<PVector, Integer> vertexMap = new HashMap<PVector, Integer>();
-    HashMap<PVector, PVector> normalMap = new HashMap<PVector, PVector>();
-
-    // Шаг 1: Добавляем вершины и вычисляем нормали
-    for (Triangle t : domeTriangles) {
-      ArrayList<Triangle> trianglesToProcess = new ArrayList<Triangle>();
-      if (smoothEdges) {
-        trianglesToProcess.addAll(t.cut(cutoff * radius));
-      } else {
-        trianglesToProcess.add(t);
-      }
-      for (Triangle tri : trianglesToProcess) {
-        // Вычисляем нормаль для треугольника
-        PVector normal = PVector.sub(tri.v2, tri.v1).cross(PVector.sub(tri.v3, tri.v1)).normalize();
-
-        // Добавляем нормали к вершинам
-        for (PVector v : new PVector[] {tri.v1, tri.v2, tri.v3}) {
-          if (!vertexMap.containsKey(v)) {
-            vertexMap.put(v, vertexIndex);
-            output.println("v " + v.x + " " + v.y + " " + v.z);
-            vertexIndex++;
-          }
-
-          if (!normalMap.containsKey(v)) {
-            normalMap.put(v, new PVector());
-          }
-          normalMap.get(v).add(normal); // добавляем нормаль к вершине
-        }
-      }
-    }
-
-    // Шаг 2: Записываем нормализованные нормали (vn)
-    for (PVector normal : normalMap.values()) {
-      normal.normalize(); // Нормализуем нормаль вершины
-      output.println("vn " + normal.x + " " + normal.y + " " + normal.z);
-    }
-
-    // Шаг 3: Записываем грани (f)
-    for (Triangle t : domeTriangles) {
-        ArrayList<Triangle> trianglesToProcess = new ArrayList<Triangle>();
-      if (smoothEdges) {
-        trianglesToProcess.addAll(t.cut(cutoff * radius));
-      } else {
-        trianglesToProcess.add(t);
-      }
-      for (Triangle tri : trianglesToProcess) {
-        int idx1 = vertexMap.get(tri.v1);
-        int idx2 = vertexMap.get(tri.v2);
-        int idx3 = vertexMap.get(tri.v3);
-        
-        output.println("f " + idx1 + "//" + idx1 + " " + idx2 + "//" + idx2 + " " + idx3 + "//" + idx3);
-      }
-    }
-
-    output.flush();
-    output.close();
-    println("OBJ файл сохранен в output/" + filename + ".obj");
-
-  } catch (Exception e) {
-    e.printStackTrace();
-  }
-}
-*/
-
-
 void fileSelected(File selection) {
   if (selection == null) {
     println("Файл не выбран.");
@@ -206,7 +114,6 @@ void fileSelected(File selection) {
   }
 }
 
-// Функция загрузки данных из .obj файла
 void loadOBJ(String filePath) {
   domeTriangles.clear(); // Очищаем массив перед загрузкой новых треугольников
   ArrayList<PVector> vertices = new ArrayList<PVector>();
@@ -232,17 +139,19 @@ void loadOBJ(String filePath) {
           face[i - 1] = Integer.parseInt(tokens[i].split("/")[0]) - 1;  // Индексы вершин
         }
         
-        // Добавляем треугольники в список
+        // Добавляем ВСЕ треугольники без проверки плоскости
         PVector v1 = vertices.get(face[0]);
         PVector v2 = vertices.get(face[1]);
         PVector v3 = vertices.get(face[2]);
         domeTriangles.add(new Triangle(v1, v2, v3));
       }
     }
+    cutoff = 1.0;
     br.close();
-    if (vertices.size()==0 && domeTriangles.size()==0){
-      println("Ошибка загрузки .obj файла: ");
-    }else{
+    
+    if (vertices.size() == 0 && domeTriangles.size() == 0) {
+      println("Ошибка загрузки .obj файла: файл пуст или неверный формат.");
+    } else {
       println("Модель загружена: " + vertices.size() + " вершин, " + domeTriangles.size() + " треугольников.");
     }
     
@@ -250,7 +159,6 @@ void loadOBJ(String filePath) {
     println("Ошибка загрузки .obj файла: " + e.getMessage());
   }
 }
-
 
 void exportToX(String filename) {
   try {

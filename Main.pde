@@ -15,7 +15,7 @@ int detail;  // Глубина разбиения
 float cutoff;  // Уровень отсечения (0 - нет отсечения)
 float radius;  // Радиус купола
 String polyhedronType = "icosahedron";  // Тип многогранника ("icosahedron" или "octahedron")
-String detailingType = "alternate";  // Тип разбиения ("alternate" или "triacon")
+String detailingType = "recursionMethod";  // Тип разбиения ("alternate" или "triacon")
 boolean showEdges = false;  // Флаг отображения рёбер
 boolean smoothEdges = true;  // Флаг сглаживания рёбер
 int countTriangles;  // Количество треугольников в куполе
@@ -25,7 +25,7 @@ int transparencyDomeStroke; //видимость граней
 
 void setup() {
   size(1024, 768, OPENGL);  // Устанавливаем размер окна и используем OpenGL для рендеринга
-  cam = new PeasyCam(this, 612, 384, 0, 300);  // Создаём камеру, центр в (612, 384), расстояние 300
+  cam = new PeasyCam(this, 612, 384, 0, 100);  // Создаём камеру, центр в (612, 384), расстояние 300
   cam.setViewport(200, 0, 1024, 768);  // Устанавливаем область просмотра камеры
   cam.rotateX(8);  // Поворачиваем камеру по X
   

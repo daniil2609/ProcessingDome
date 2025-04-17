@@ -24,7 +24,7 @@ void setupGUI() {
   cp5.addSlider("cutoff")
     .setPosition(10, 60)
     .setSize(150, 20)
-    .setRange(-PI / 2, PI)
+    .setRange(-1, 1)
     .setValue(0);
          
   cp5.addTextfield("cutoff_text")
@@ -41,8 +41,14 @@ void setupGUI() {
   cp5.addSlider("radius")
     .setPosition(10, 110)
     .setSize(150, 20)
-    .setRange(10, 500)
-    .setValue(100)
+    .setRange(1, 100)
+    .setValue(20)
+    .onChange(new CallbackListener() {
+     public void controlEvent(CallbackEvent event) {
+       float r = event.getController().getValue();
+       cam.setDistance(r + 100); // автоматически отодвигаем камеру
+     }
+   })
     ;
 
      
@@ -100,10 +106,10 @@ void setupGUI() {
   cp5.addRadioButton("radio_g2")
      .setPosition(12,12)
      .setSize(20,15)
-     .addItem("alternate",0)
-     .addItem("triacon",1)
+     .addItem("recursion method",0)
+     .addItem("alternate",1)
      .setGroup(g2)
-     .activate(detailingType.equals("alternate") ? 0 : 1)
+     .activate(detailingType.equals("recursionMethod") ? 0 : 1)
      ;
      
   // кнопка сохранения obj
@@ -185,7 +191,7 @@ void controlEvent(ControlEvent event) {
     createDome();
   }
    if(event.isFrom("radio_g2")) {
-    detailingType = event.getValue() == 1.0 ? "triacon" : "alternate";
+    detailingType = event.getValue() == 1.0 ? "alternate" : "recursionMethod";
     createDome();
   }
    if (event.isFrom(cp5.get(Textfield.class, "detail_text")) || event.isFrom(cp5.get(Textfield.class, "cutoff_text")) || event.isFrom(cp5.get(Textfield.class, "radius_text"))) {
@@ -241,7 +247,7 @@ void drawHUD() {
   fill(255); // Цвет текста
   textSize(14); // Размер текста
   String infoText = "FPS: " + (int)frameRate + "\n" +
-                  "Метод разбивки: " + (detailingType.equals("alternate") ? "Alternate" : "Triacon") + "\n" +
+                  "Метод разбивки: " + (detailingType.equals("recursionMethod") ? "Recursion method" : "Alternate") + "\n" +
                   "Базовый многогранник: " + (polyhedronType.equals("icosahedron") ? "Icosahedron" : "Octahedron") + "\n" +
                   "Количество треугольников: " + countTriangles + "\n" +
                   "Частота детализации: " + frequency + "\n" +

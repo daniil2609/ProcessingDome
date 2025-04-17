@@ -96,11 +96,11 @@ void createDome() {
     PVector v1 = baseVertices[face[0]].copy().normalize().mult(radius);
     PVector v2 = baseVertices[face[1]].copy().normalize().mult(radius);
     PVector v3 = baseVertices[face[2]].copy().normalize().mult(radius);
-    if (detailingType.equals("alternate")){
+    if (detailingType.equals("recursionMethod")){
       frequency = detail; //для вывода частоты детализации
-      subdivideAlternate(v1, v2, v3, detail);
+      subdivideRecursionMethod(v1, v2, v3, detail);
     }else{
-      subdivideTriacon(v1, v2, v3, detail);
+      subdivideAlternate(v1, v2, v3, detail);
     }
     
   }
@@ -130,7 +130,7 @@ void drawDome() {
 }
 
 // Методы для деления треугольника для увеличения детализации
-void subdivideAlternate(PVector v1, PVector v2, PVector v3, int depth) {
+void subdivideRecursionMethod(PVector v1, PVector v2, PVector v3, int depth) {
     if (depth <= 1) {  // Останавливаем рекурсию при depth == 1
         domeTriangles.add(new Triangle(v1, v2, v3));
         return;
@@ -141,7 +141,8 @@ void subdivideAlternate(PVector v1, PVector v2, PVector v3, int depth) {
     PVector v31 = PVector.add(v3, v1).normalize().mult(radius);
 
     // Если depth нечётное, уменьшаем на 1 перед передачей в рекурсию
-    int newDepth = (depth % 2 == 0) ? depth - 1 : depth - 1;
+    //int newDepth = (depth % 2 == 0) ? depth - 1 : depth - 1;
+    int newDepth = depth;
 
     // Рекурсивно делим треугольник
     subdivideAlternate(v1, v12, v31, newDepth);
@@ -150,36 +151,8 @@ void subdivideAlternate(PVector v1, PVector v2, PVector v3, int depth) {
     subdivideAlternate(v12, v23, v31, newDepth);
 }
 
-void subdivideTriacon(PVector v1, PVector v2, PVector v3, int depth) {
-    switch (depth) {
-    case 1:
-      frequency = 1;
-      break;
-    case 2:
-      frequency = 2;
-      break;
-    case 3:
-      frequency = 4;
-      break;
-    case 4:
-      frequency = 6;
-      break;
-    case 5:
-      frequency = 8;
-      break;
-    case 6:
-      frequency = 10;
-      break;
-    case 7:
-      frequency = 12;
-      break;
-    case 8:
-      frequency = 14;
-      break;
-    default:
-      frequency = 1;
-      break;
-  }
+void subdivideAlternate(PVector v1, PVector v2, PVector v3, int depth) {
+  frequency = depth;
   
   PVector[][] grid = new PVector[frequency + 1][frequency + 1];
   
