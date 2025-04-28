@@ -1,175 +1,328 @@
 void setupGUI() {
-// Инициализация интерфейса ControlP5
+  // Инициализация интерфейса ControlP5
   cp5 = new ControlP5(this);
   cp5.setAutoDraw(false);
   
+  Group parameters = cp5.addGroup("parameters")
+    .setPosition(0,20)
+    .setSize(200, 105)
+    .activateEvent(true)
+    .setBackgroundColor(color(255,80))
+    .setBackgroundHeight(105)
+    .setLabel("parameters")
+     ;
+   
   // Слайдер детализации
   cp5.addSlider("detail")
-    .setPosition(10, 10)
-    .setSize(150, 20)
+    .setPosition(5, 5)
+    .setSize(140, 20)
     .setRange(1, 8)
-    .setValue(1);
-    
-  cp5.addTextfield("detail_text")
-     .setPosition(10,35)
-     .setSize(80, 20)
-     .setFocus(false)
-     .setColor(color(255,0,0))
-     .setText(str((int)detail))
-     .setAutoClear(false)
-     .setLabel("") 
-     ;
+    .setGroup(parameters)
+    .setValue(1)
+    ;
   
-  // Слайдер отсечения
-  cp5.addSlider("cutoff")
-    .setPosition(10, 60)
-    .setSize(150, 20)
-    .setRange(-1, 1)
-    .setValue(0);
-         
-  cp5.addTextfield("cutoff_text")
-     .setPosition(10,85)
-     .setSize(80, 20)
-     .setFocus(false)
-     .setColor(color(255,0,0))
-     .setText(str((float)cutoff))
-     .setAutoClear(false)
-     .setLabel("") 
-     ;
+  //Текстовое поле детализации
+  cp5.addTextfield("detail_text")
+    .setPosition(5,30)
+    .setSize(80, 20)
+    .setFocus(false)
+    .setColor(color(255,0,0))
+    .setText(str((int)detail))
+    .setAutoClear(false)
+    .setLabel("") 
+    .setGroup(parameters)
+    ;
   
   // Слайдер радиуса
   cp5.addSlider("radius")
-    .setPosition(10, 110)
-    .setSize(150, 20)
+    .setPosition(5, 55)
+    .setSize(140, 20)
     .setRange(1, 100)
     .setValue(20)
+    .setGroup(parameters)
     .onChange(new CallbackListener() {
-     public void controlEvent(CallbackEvent event) {
-       float r = event.getController().getValue();
-       cam.setDistance(r + 100); // автоматически отодвигаем камеру
-     }
-   })
+      public void controlEvent(CallbackEvent event) {
+        float r = event.getController().getValue();
+        cam.setDistance(r + 100); // автоматически отодвигаем камеру
+        }
+      })
     ;
-
-     
-  cp5.addTextfield("radius_text")
-     .setPosition(10,135)
-     .setSize(80, 20)
-     .setFocus(false)
-     .setColor(color(255,0,0))
-     .setText(str((float)radius))
-     .setAutoClear(false)
-     .setLabel("") 
-     ;
   
+  //Текстовое поле радиуса
+  cp5.addTextfield("radius_text")
+    .setPosition(5,80)
+    .setSize(80, 20)
+    .setFocus(false)
+    .setColor(color(255,0,0))
+    .setText(str((float)radius))
+    .setAutoClear(false)
+    .setGroup(parameters)
+    .setLabel("") 
+    ;
+  
+  Group cutDome = cp5.addGroup("cutDome")
+    .setPosition(0, 150)
+    .setSize(200, 205)
+    .activateEvent(true)
+    .setBackgroundColor(color(255,80))
+    .setBackgroundHeight(205)
+    .setLabel("Cut dome")
+    ;
+  
+  // Слайдер отсечения
+  cp5.addSlider("cutoff")
+    .setPosition(5, 5)
+    .setSize(140, 20)
+    .setRange(-1, 1)
+    .setValue(0)
+    .setGroup(cutDome)
+    .onPress(handleInteraction)
+    .onDrag(handleInteraction)
+    .onRelease(e -> { /* только обновляем таймер */ })
+    ;
+  
+  // Текстовое поле отсечения
+  cp5.addTextfield("cutoff_text")
+    .setPosition(5,30)
+    .setSize(80, 20)
+    .setGroup(cutDome)
+    .setFocus(false)
+    .setColor(color(255,0,0))
+    .setText(str((float)cutoff))
+    .setAutoClear(false)
+    .setLabel("")
+    ;
+  
+   // Слайдер поворота плоскости отсечения по Z
+  cp5.addSlider("cutoffAngleZ")
+    .setPosition(5, 55)
+    .setSize(140, 20)
+    .setRange(0, 360)
+    .setValue(0)
+    .setLabel("CutRotateZ")
+    .setGroup(cutDome)
+    .onPress(handleInteraction)
+    .onDrag(handleInteraction)
+    .onRelease(e -> { /* только обновляем таймер */ })
+    ;
+  
+  // Текстовое поле для поворота вокруг оси Z
+  cp5.addTextfield("cutoffAngleZ_text")
+    .setPosition(5,80)
+    .setSize(80, 20)
+    .setGroup(cutDome)
+    .setFocus(false)
+    .setColor(color(255,0,0))
+    .setText(str((float)cutoffAngleZ))
+    .setAutoClear(false)
+    .setLabel("") 
+    ;
+  
+  // Слайдер для поворота вокруг оси X
+  cp5.addSlider("cutoffAngleX")
+    .setPosition(5, 105)
+    .setSize(140, 20)
+    .setRange(0, 360)
+    .setValue(0)
+    .setLabel("CutRotateX")
+    .setGroup(cutDome)
+    .onPress(handleInteraction)
+    .onDrag(handleInteraction)
+    .onRelease(e -> { /* только обновляем таймер */ })
+    ;
+  
+  // Текстовое поле для поворота вокруг оси X
+  cp5.addTextfield("cutoffAngleX_text")
+    .setPosition(5, 130)
+    .setSize(80, 20)
+    .setGroup(cutDome)
+    .setFocus(false)
+    .setColor(color(255,0,0))
+    .setText(str((float)cutoffAngleX))
+    .setAutoClear(false)
+    .setLabel("") 
+    ;
+  
+  // Слайдер для поворота вокруг оси Y
+  cp5.addSlider("cutoffAngleY")
+    .setPosition(5, 155)
+    .setSize(140, 20)
+    .setRange(0, 360)
+    .setValue(0)
+    .setLabel("CutRotateY")
+    .setGroup(cutDome)
+    .onPress(handleInteraction)
+    .onDrag(handleInteraction)
+    .onRelease(e -> { /* только обновляем таймер */ })
+    ;
+  
+  // Текстовое поле для поворота вокруг оси Y
+  cp5.addTextfield("cutoffAngleY_text")
+    .setPosition(5, 180)
+    .setSize(80, 20)
+    .setGroup(cutDome)
+    .setFocus(false)
+    .setColor(color(255,0,0))
+    .setText(str((float)cutoffAngleY))
+    .setAutoClear(false)
+    .setLabel("") 
+    ;
+  
+  Group togglePolyhedron = cp5.addGroup("togglePolyhedron")
+    .setPosition(0,380)
+    .setSize(200, 40)
+    .activateEvent(true)
+    .setBackgroundColor(color(255,80))
+    .setBackgroundHeight(40)
+    .setLabel("Toggle Polyhedron")
+    ;
+    
+  // Переключатель типа многогранника
+  cp5.addRadioButton("radio_g1")
+    .setPosition(5,5)
+    .setSize(20,15)
+    .addItem("icosahedron",0)
+    .addItem("octahedron",1)
+    .setGroup(togglePolyhedron)
+    .activate(polyhedronType.equals("icosahedron") ? 0 : 1)
+    ;
+  
+  Group methodOfDetailing = cp5.addGroup("methodOfDetailing")
+    .setPosition(0,445)
+    .setSize(200, 40)
+    .activateEvent(true)
+    .setBackgroundColor(color(255,80))
+    .setBackgroundHeight(40)
+    .setLabel("Method of detailing")
+    ;
+  
+  // Переключатель типа детализации
+  cp5.addRadioButton("radio_g2")
+    .setPosition(5,5)
+    .setSize(20,15)
+    .addItem("recursion method",0)
+    .addItem("alternate",1)
+    .setGroup(methodOfDetailing)
+    .activate(detailingType.equals("recursionMethod") ? 0 : 1)
+    ;
+  
+  Group options = cp5.addGroup("options")
+    .setPosition(0,510)
+    .setSize(200, 45)
+    .activateEvent(true)
+    .setBackgroundColor(color(255,80))
+    .setBackgroundHeight(45)
+    .setLabel("options")
+    ;
+   
   // Переключатель отображения только рёбер
   cp5.addToggle("showEdges")
-    .setPosition(10, 165)
+    .setPosition(5, 5)
     .setSize(50, 20)
-    .setValue(showEdges);
+    .setGroup(options)
+    .setValue(showEdges)
+    ;
   
   // Переключатель ровных краёв
   cp5.addToggle("smoothEdges")
-    .setPosition(90, 165)
+    .setPosition(65, 5)
     .setSize(50, 20)
-    .setValue(smoothEdges);
-    
-  // Переключатель типа многогранника
-  Group g1 = cp5.addGroup("g1")
-    .setPosition(10,220)
-    .setSize(150, 70)
+    .setGroup(options)
+    .setValue(smoothEdges)
+    ;
+  
+  Group file = cp5.addGroup("file")
+    .setPosition(0,580)
+    .setSize(200, 65)
     .activateEvent(true)
     .setBackgroundColor(color(255,80))
-    .setBackgroundHeight(50)
-    .setLabel("Toggle Polyhedron")
-     ;
-                
-  cp5.addRadioButton("radio_g1")
-     .setPosition(12,12)
-     .setSize(20,15)
-     .addItem("icosahedron",0)
-     .addItem("octahedron",1)
-     .setGroup(g1)
-     .activate(polyhedronType.equals("icosahedron") ? 0 : 1)
-     ;
-     
-  // Переключатель типа многогранника
-  Group g2 = cp5.addGroup("g2")
-    .setPosition(10,300)
-    .setSize(150, 70)
-    .activateEvent(true)
-    .setBackgroundColor(color(255,80))
-    .setBackgroundHeight(50)
-    .setLabel("Method of detailing")
-     ;
-                
-  cp5.addRadioButton("radio_g2")
-     .setPosition(12,12)
-     .setSize(20,15)
-     .addItem("recursion method",0)
-     .addItem("alternate",1)
-     .setGroup(g2)
-     .activate(detailingType.equals("recursionMethod") ? 0 : 1)
-     ;
-     
+    .setBackgroundHeight(65)
+    .setLabel("file")
+    ;
+   
   // кнопка сохранения obj
   cp5.addButton("saveOBJ")
-     .setValue(0)
-     .setPosition(10,375)
-     .setSize(70,25)
-     .setLabel("save OBJ")
-     .onClick(new CallbackListener() {
-     public void controlEvent(CallbackEvent event) {
-        exportToOBJ("outputDome");
-       }
-     });
- 
+    .setValue(0)
+    .setPosition(5,5)
+    .setSize(70,25)
+    .setLabel("save OBJ")
+    .setGroup(file)
+    .onClick(new CallbackListener() {
+      public void controlEvent(CallbackEvent event) {
+        selectOutput("Select a file to save:", "fileSelectedToSaveOBJ");
+        }
+      })
+    ;
+   
   // кнопка загрузки obj
   cp5.addButton("loadOBJ")
-     .setValue(0)
-     .setPosition(90,375)
-     .setSize(70,25)
-     .setLabel("load OBJ")
-     .onClick(new CallbackListener() {
-     public void controlEvent(CallbackEvent event) {
-        selectInput("Выберите .obj файл:", "fileSelected"); // Открываем окно выбора файла при старте
-       }
-     });
-     
-     // кнопка сохранения x
+    .setValue(0)
+    .setPosition(85,5)
+    .setSize(70,25)
+    .setLabel("load OBJ")
+    .setGroup(file)
+    .onClick(new CallbackListener() {
+      public void controlEvent(CallbackEvent event) {
+        selectInput("Выберите .obj файл:", "fileSelectedToLoad"); // Открываем окно выбора файла при старте
+        }
+      })
+    ;
+   
+  // кнопка сохранения x
   cp5.addButton("saveX")
-     .setValue(0)
-     .setPosition(10,405)
-     .setSize(70,25)
-     .setLabel("save X")
-     .onClick(new CallbackListener() {
-     public void controlEvent(CallbackEvent event) {
-        exportToX("outputDome");
-       }
-     });
-     
+    .setValue(0)
+    .setPosition(5,35)
+    .setSize(70,25)
+    .setLabel("save X")
+    .setGroup(file)
+    .onClick(new CallbackListener() {
+      public void controlEvent(CallbackEvent event) {
+        selectOutput("Select a file to save:", "fileSelectedToSaveX");
+        }
+      })
+    ;
+   
+  Group design = cp5.addGroup("design")
+    .setPosition(0,670)
+    .setSize(200, 80)
+    .activateEvent(true)
+    .setBackgroundColor(color(255,80))
+    .setBackgroundHeight(80)
+    .setLabel("design")
+    ;
+   
   //слайдер изменения цвета
   cp5.addSlider("color")
-    .setPosition(10, 600)
+    .setPosition(5, 5)
     .setSize(150, 20)
     .setRange(0, 255)
-    .setValue(150);
-    
+    .setGroup(design)
+    .setValue(150)
+    ;
+  
   //слайдер изменения прозрачности
   cp5.addSlider("alpha")
-    .setPosition(10, 625)
+    .setPosition(5, 30)
     .setSize(150, 20)
     .setRange(0, 255)
-    .setValue(150);
-    
-      //слайдер изменения прозрачности граней
+    .setGroup(design)
+    .setValue(150)
+    ;
+  
+  //слайдер изменения прозрачности граней
   cp5.addSlider("stroke")
-    .setPosition(10, 650)
+    .setPosition(5, 55)
     .setSize(150, 20)
     .setRange(0, 255)
-    .setValue(150);
+    .setGroup(design)
+    .setValue(150)
+    ;
 }
 
+CallbackListener handleInteraction = e -> {
+    lastActiveTime = millis(); 
+    showCuttingPlane = true;
+  };
 
 // Обработка изменений параметров
 void controlEvent(ControlEvent event) {
@@ -180,6 +333,18 @@ void controlEvent(ControlEvent event) {
     cp5.get(Textfield.class, "detail_text").setText(str((int)detail));
     cp5.get(Textfield.class, "cutoff_text").setText(str((float)cutoff));
     cp5.get(Textfield.class, "radius_text").setText(str((float)radius));
+    createDome();
+  }
+  if (event.isFrom("cutoffAngleZ") || event.isFrom("cutoffAngleY") || event.isFrom("cutoffAngleX")) {
+    cutoffAngleZ = radians(cp5.getController("cutoffAngleZ").getValue());
+    cutoffAngleX = radians(cp5.getController("cutoffAngleX").getValue());
+    cutoffAngleY = radians(cp5.getController("cutoffAngleY").getValue());
+    
+    // Обновляем текстовые поля (в градусах!)
+    cp5.get(Textfield.class, "cutoffAngleZ_text").setText(str(cp5.getController("cutoffAngleZ").getValue()));
+    cp5.get(Textfield.class, "cutoffAngleX_text").setText(str(cp5.getController("cutoffAngleX").getValue()));
+    cp5.get(Textfield.class, "cutoffAngleY_text").setText(str(cp5.getController("cutoffAngleY").getValue()));
+    
     createDome();
   }
   if (event.isFrom("showEdges") || event.isFrom("smoothEdges")) {
@@ -218,6 +383,34 @@ void controlEvent(ControlEvent event) {
           cp5.get(Textfield.class, "radius_text").setValue(str(radius));
         }
       }
+      
+    if (event.isFrom(cp5.get(Textfield.class, "cutoffAngleZ_text")) || 
+        event.isFrom(cp5.get(Textfield.class, "cutoffAngleX_text")) || 
+        event.isFrom(cp5.get(Textfield.class, "cutoffAngleY_text"))) {
+        
+        try {
+            float newAngleZ = Float.parseFloat(cp5.get(Textfield.class, "cutoffAngleZ_text").getText());
+            float newAngleX = Float.parseFloat(cp5.get(Textfield.class, "cutoffAngleX_text").getText());
+            float newAngleY = Float.parseFloat(cp5.get(Textfield.class, "cutoffAngleY_text").getText());
+            
+            // Устанавливаем значения слайдеров (в градусах)
+            cp5.getController("cutoffAngleZ").setValue(newAngleZ);
+            cp5.getController("cutoffAngleX").setValue(newAngleX);
+            cp5.getController("cutoffAngleY").setValue(newAngleY);
+            
+            // Обновляем углы в радианах
+            cutoffAngleZ = radians(newAngleZ);
+            cutoffAngleX = radians(newAngleX);
+            cutoffAngleY = radians(newAngleY);
+            
+            createDome();
+        } catch (NumberFormatException e) {
+            // Если введено не число, восстанавливаем предыдущие значения
+            cp5.get(Textfield.class, "cutoffAngleZ_text").setText(str(cp5.getController("cutoffAngleZ").getValue()));
+            cp5.get(Textfield.class, "cutoffAngleX_text").setText(str(cp5.getController("cutoffAngleX").getValue()));
+            cp5.get(Textfield.class, "cutoffAngleY_text").setText(str(cp5.getController("cutoffAngleY").getValue()));
+        }
+    }
       
    if (event.isFrom("color") || event.isFrom("alpha") || event.isFrom("stroke")) {
     colorDome = (int)cp5.getController("color").getValue();
@@ -272,6 +465,10 @@ void draw3DScene() {
   lights();  // Включаем освещение
   
   drawDome();  // Рисуем купол (Triangle.pde)
-  
+
+    // Автоматическое скрытие через 2 секунда неактивности
+  if (showCuttingPlane && millis() - lastActiveTime > hideDelay) {
+    showCuttingPlane = false;
+  }
   popMatrix();  // Восстанавливаем систему координат
 }

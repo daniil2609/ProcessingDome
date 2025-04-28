@@ -3,7 +3,7 @@ ArrayList<Triangle> domeTriangles = new ArrayList<Triangle>(); // Массив �
 class Triangle {
   PVector v1, v2, v3; // Вершины треугольника
 
-  // Конструктор для инициализации вершин треугольника
+  // Конструктор
   Triangle(PVector v1, PVector v2, PVector v3) {
     this.v1 = v1;
     this.v2 = v2;
@@ -14,63 +14,150 @@ class Triangle {
   void display() {
     if (showEdges) {
       stroke(transparencyDomeStroke);
-      noFill(); // Заполнение выключено
-      beginShape(TRIANGLES); // Начинаем рисовать ребра треугольника
-      vertex(v1.x, v1.y, v1.z); // Первая вершина
-      vertex(v2.x, v2.y, v2.z); // Вторая вершина
-      vertex(v3.x, v3.y, v3.z); // Третья вершина
-      endShape(CLOSE); // Закрываем контур треугольника
+      noFill();
+      beginShape(TRIANGLES);
+      vertex(v1.x, v1.y, v1.z);
+      vertex(v2.x, v2.y, v2.z);
+      vertex(v3.x, v3.y, v3.z);
+      endShape(CLOSE);
     } else {
       stroke(transparencyDomeStroke);
-        // Получаем цвета
-      int[] colors = getColorDome(); //(Utils.pde)
-      int r = colors[0];
-      int g = colors[1];
-      int b = colors[2];
-      fill(r, g, b, transparencyDome);
-      beginShape(TRIANGLES); // Начинаем отрисовку треугольника
-      vertex(v1.x, v1.y, v1.z); // Первая вершина
-      vertex(v2.x, v2.y, v2.z); // Вторая вершина
-      vertex(v3.x, v3.y, v3.z); // Третья вершина
-      endShape(CLOSE); // Завершаем отрисовку треугольника
+      int[] colors = getColorDome();
+      fill(colors[0], colors[1], colors[2], transparencyDome);
+      beginShape(TRIANGLES);
+      vertex(v1.x, v1.y, v1.z);
+      vertex(v2.x, v2.y, v2.z);
+      vertex(v3.x, v3.y, v3.z);
+      endShape(CLOSE);
     }
   }
-   // Метод для обрезки треугольника
-  ArrayList<Triangle> cut(float cutoffZ) {
-    cutoffZ = cutoffZ - 0.00001;
+
+  // Метод для обрезки треугольника
+  ArrayList<Triangle> cut(float cutoffZ, float cutoffAngleZ, float cutoffAngleX, float cutoffAngleY) {
     ArrayList<PVector> above = new ArrayList<PVector>();
     ArrayList<PVector> below = new ArrayList<PVector>();
 
-    // Проверяем, какие вершины находятся выше и ниже плоскости отсечения
     for (PVector v : new PVector[]{v1, v2, v3}) {
-      if (v.z <= cutoffZ) above.add(v);
-      else below.add(v);
+      if (isVertexBelow(v, cutoffZ, cutoffAngleZ, cutoffAngleX, cutoffAngleY)) {
+        above.add(v);
+      } else {
+        below.add(v);
+      }
     }
 
     ArrayList<Triangle> result = new ArrayList<Triangle>();
 
     if (above.size() == 3) {
-      // Все вершины выше плоскости - добавляем весь треугольник
       result.add(this);
     } else if (above.size() == 2 && below.size() == 1) {
-      // Две вершины выше плоскости - создаем один треугольник
-      PVector p1 = getIntersection(below.get(0), above.get(0), cutoffZ);
-      PVector p2 = getIntersection(below.get(0), above.get(1), cutoffZ);
+      PVector p1 = getIntersection(below.get(0), above.get(0), cutoffZ, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
+      PVector p2 = getIntersection(below.get(0), above.get(1), cutoffZ, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
       result.add(new Triangle(above.get(0), above.get(1), p1));
       result.add(new Triangle(above.get(1), p1, p2));
     } else if (above.size() == 1 && below.size() == 2) {
-      // Одна вершина выше плоскости - создаем один треугольник
-      PVector p1 = getIntersection(above.get(0), below.get(0), cutoffZ);
-      PVector p2 = getIntersection(above.get(0), below.get(1), cutoffZ);
+      PVector p1 = getIntersection(above.get(0), below.get(0), cutoffZ, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
+      PVector p2 = getIntersection(above.get(0), below.get(1), cutoffZ, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
       result.add(new Triangle(above.get(0), p1, p2));
     }
+    
     return result;
   }
 
-  // Находим точку пересечения ребра с плоскостью отсечения
-  PVector getIntersection(PVector start, PVector end, float cutoffZ) {
-    float t = (cutoffZ - start.z) / (end.z - start.z);
+  // Проверка вершины
+  boolean isVertexBelow(PVector v, float cutoffZ, float cutoffAngleZ, float cutoffAngleX, float cutoffAngleY) {
+    PVector rotated = rotatePointForCalculation(v, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
+    return rotated.z <= cutoffZ;
+  }
+
+  // Поиск пересечения
+  PVector getIntersection(PVector start, PVector end, float cutoffZ, 
+                         float cutoffAngleZ, float cutoffAngleX, float cutoffAngleY) {
+    PVector rotStart = rotatePointForCalculation(start, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
+    PVector rotEnd = rotatePointForCalculation(end, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
+    
+    float t = (cutoffZ - rotStart.z) / (rotEnd.z - rotStart.z);
     return PVector.add(start, PVector.sub(end, start).mult(t));
+  }
+
+  // Отображение плоскости отсечения
+void displayCuttingPlane(float cutoffZ, float cutoffAngleZ, float cutoffAngleX, float cutoffAngleY) {
+    pushMatrix();
+    pushStyle();
+    
+    // Переносим плоскость на нужную позицию по Z
+    //translate(0, 0, cutoffZ);
+    
+    // Применяем повороты
+    rotateZ(-cutoffAngleZ);
+    rotateX(-cutoffAngleX);
+    rotateY(-cutoffAngleY);
+    
+    // Настройки цвета
+    int[] colors = getColorDome();
+    fill(colors[0], colors[1], colors[2], transparencyDome/2);
+    noStroke();
+    
+    // 1. Рисуем основную плоскость (двустороннюю)
+    float planeSize = radius*2;
+    beginShape(QUADS);
+    // Лицевая сторона
+    vertex(-planeSize, -planeSize, cutoffZ);
+    vertex(planeSize, -planeSize, cutoffZ);
+    vertex(planeSize, planeSize, cutoffZ);
+    vertex(-planeSize, planeSize, cutoffZ);
+    endShape();
+    
+    // 2. Рисуем сетку
+    stroke(255, 100); // Полупрозрачный белый
+    strokeWeight(0.8);
+    float gridStep = radius/5;
+    
+    // Вертикальные линии сетки
+    for(float x = -planeSize; x <= planeSize; x += gridStep) {
+        line(x, -planeSize, cutoffZ, x, planeSize, cutoffZ);
+    }
+    
+    // Горизонтальные линии сетки
+    for(float y = -planeSize; y <= planeSize; y += gridStep) {
+        line(-planeSize, y, cutoffZ, planeSize, y, cutoffZ);
+    }
+    
+    // 3. Рисуем нормаль по обе стороны плоскости (белую)
+    stroke(255, 100); // Полупрозрачный белый
+    strokeWeight(2);
+    
+    // Нормаль в положительном направлении (на весь экран)
+    PVector normEndPos = new PVector(0, 0, planeSize*100);
+    line(0, 0, 0, normEndPos.x, normEndPos.y, normEndPos.z);
+    
+    // Нормаль в отрицательном направлении (на весь экран)
+    PVector normEndNeg = new PVector(0, 0, -planeSize*100);
+    line(0, 0, 0, normEndNeg.x, normEndNeg.y, normEndNeg.z);
+    
+    popStyle();
+    popMatrix();
+}
+
+  // Поворот точки для расчетов (порядок Z -> X -> Y)
+  private PVector rotatePointForCalculation(PVector v, float angleZ, float angleX, float angleY) {
+    PVector rotated = v.copy();
+    
+    // Поворот вокруг Z
+    float x = rotated.x * cos(angleZ) - rotated.y * sin(angleZ);
+    float y = rotated.x * sin(angleZ) + rotated.y * cos(angleZ);
+    rotated.set(x, y, rotated.z);
+    
+    // Поворот вокруг X
+    y = rotated.y * cos(angleX) - rotated.z * sin(angleX);
+    float z = rotated.y * sin(angleX) + rotated.z * cos(angleX);
+    rotated.set(rotated.x, y, z);
+    
+    // Поворот вокруг Y
+    x = rotated.x * cos(angleY) + rotated.z * sin(angleY);
+    z = -rotated.x * sin(angleY) + rotated.z * cos(angleY);
+    rotated.set(x, rotated.y, z);
+    
+    return rotated;
   }
 }
 
@@ -106,27 +193,35 @@ void createDome() {
   }
 }
 
-// Метод для отображения купола (с ровной поверхностью)
+// Метод для отображения купола
 void drawDome() {
-  // Проходим по каждому треугольнику в куполе
   int counter = 0;
-  for (Triangle t : domeTriangles) {
-    if(smoothEdges){
-      ArrayList<Triangle> cutTriangles = t.cut(cutoff * radius);
-      for (Triangle ct : cutTriangles) {
-        counter++;
-        ct.display(); // отображаем каждый обрезанный треугольник
-      }
-      countTriangles = counter;
-    } // Метод для отображения купола (с рваной поверхностью)
-    else{
-      if (t.v1.z < cutoff * radius && t.v2.z < cutoff * radius && t.v3.z < cutoff * radius) {
-        counter++;
-        t.display(); // Отображаем треугольник, если он находится ниже уровня отсечения
-      }
-      countTriangles = counter;
+  
+  // Отображаем плоскость отсечения
+  if (domeTriangles.size() > 0) {
+    if (showCuttingPlane){
+      domeTriangles.get(0).displayCuttingPlane(cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
     }
   }
+  
+  for (Triangle t : domeTriangles) {
+    if (smoothEdges) {
+      ArrayList<Triangle> cutTriangles = t.cut(cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
+      for (Triangle ct : cutTriangles) {
+        counter++;
+        ct.display();
+      }
+    } else {
+      // Оптимизированная проверка всех вершин
+      if (t.isVertexBelow(t.v1, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
+          t.isVertexBelow(t.v2, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
+          t.isVertexBelow(t.v3, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY)) {
+        counter++;
+        t.display();
+      }
+    }
+  }
+  countTriangles = counter;
 }
 
 // Методы для деления треугольника для увеличения детализации
