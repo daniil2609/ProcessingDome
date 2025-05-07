@@ -80,7 +80,27 @@ void exportToOBJ(String filePath) {
           int idx1 = vertexMap.get(ct.v1);
           int idx2 = vertexMap.get(ct.v2);
           int idx3 = vertexMap.get(ct.v3);
-          output.println("f " + idx1 + " " + idx2 + " " + idx3);
+          //проверка (выворачиваем все повернутые грани наружу)
+          PVector edge1 = PVector.sub(ct.v2, ct.v1);
+          PVector edge2 = PVector.sub(ct.v3, ct.v1);
+          PVector normal = edge1.cross(edge2).normalize();
+          
+          // Центр треугольника
+          PVector center = new PVector(
+            (ct.v1.x + ct.v2.x + ct.v3.x) / 3.0,
+            (ct.v1.y + ct.v2.y + ct.v3.y) / 3.0,
+            (ct.v1.z + ct.v2.z + ct.v3.z) / 3.0
+          );
+          
+          // Вектор от центра сферы к треугольнику
+          PVector toCenter = center.copy().normalize();
+          
+          // Если нормаль направлена внутрь — инвертируем вершины
+          if (normal.dot(toCenter) < 0) {
+              output.println("f " + idx3 + " " + idx2 + " " + idx1);
+          } else {
+              output.println("f " + idx1 + " " + idx2 + " " + idx3);
+          }
         }
       } else {
           if (t.isVertexBelow(t.v1, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
@@ -89,7 +109,27 @@ void exportToOBJ(String filePath) {
             int idx1 = vertexMap.get(t.v1);
             int idx2 = vertexMap.get(t.v2);
             int idx3 = vertexMap.get(t.v3);
-            output.println("f " + idx1 + " " + idx2 + " " + idx3);
+            //проверка (выворачиваем все повернутые грани наружу)
+            PVector edge1 = PVector.sub(t.v2, t.v1);
+            PVector edge2 = PVector.sub(t.v3, t.v1);
+            PVector normal = edge1.cross(edge2).normalize();
+            
+            // Центр треугольника
+            PVector center = new PVector(
+              (t.v1.x + t.v2.x + t.v3.x) / 3.0,
+              (t.v1.y + t.v2.y + t.v3.y) / 3.0,
+              (t.v1.z + t.v2.z + t.v3.z) / 3.0
+            );
+            
+            // Вектор от центра сферы к треугольнику
+            PVector toCenter = center.copy().normalize();
+            
+            // Если нормаль направлена внутрь — инвертируем вершины
+            if (normal.dot(toCenter) < 0) {
+                output.println("f " + idx3 + " " + idx2 + " " + idx1);
+            } else {
+                output.println("f " + idx1 + " " + idx2 + " " + idx3);
+            }
         }
       }
     }    
@@ -121,7 +161,7 @@ void exportToX(String filePath) {
 
     // Заголовок файла
     output.println("xof 0303txt 0032");
-    output.println("Header { 1;0;1; }");
+    output.println("Header { 1;\n0;\n1; }");
     output.println();
 
     // Открываем блок Mesh
@@ -129,30 +169,6 @@ void exportToX(String filePath) {
 
     HashMap<PVector, Integer> vertexMap = new HashMap<>();
     ArrayList<PVector> vertexList = new ArrayList<>();
-
-
-    
-  //  for (Triangle t : domeTriangles) {
-  //  if (smoothEdges) {
-  //    ArrayList<Triangle> cutTriangles = t.cut(cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
-  //    for (Triangle ct : cutTriangles) {
-  //      counter++;
-  //      ct.display();
-  //    }
-  //  } else {
-  //    // Оптимизированная проверка всех вершин
-  //    if (t.isVertexBelow(t.v1, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
-  //        t.isVertexBelow(t.v2, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
-  //        t.isVertexBelow(t.v3, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY)) {
-  //      counter++;
-  //      t.display();
-  //    }
-  //  }
-  //}
-    
-   
-
-
 
     // Добавляем вершины (уникальные)
     int vertexIndex = 0;
@@ -185,32 +201,52 @@ void exportToX(String filePath) {
     output.println("  " + vertexList.size() + ";");
     for (int i = 0; i < vertexList.size(); i++) {
       PVector v = vertexList.get(i);
-      output.println("  " + v.x + ";" + v.y + ";" + v.z + (i == vertexList.size() - 1 ? ";" : ";,"));
+      output.println("  " + v.x + ";" + v.y + ";" + v.z + (i == vertexList.size() - 1 ? ";;" : ";,"));
     }
 
     output.println();
 
     // Добавляем индексы треугольников
     ArrayList<String> faceList = new ArrayList<>();
+    
     for (Triangle t : domeTriangles) {
+      ArrayList<Triangle> trianglesToProcess = new ArrayList<Triangle>();
+    
       if (smoothEdges) {
-        ArrayList<Triangle> cutTriangles = t.cut(cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
-        for (Triangle ct : cutTriangles) {
-          int idx1 = vertexMap.get(ct.v1);
-          int idx2 = vertexMap.get(ct.v2);
-          int idx3 = vertexMap.get(ct.v3);
-          faceList.add("3;" + idx1 + "," + idx2 + "," + idx3 + ";");
-          faceList.add("3;" + idx3 + "," + idx2 + "," + idx1 + ";");
-        }
+        trianglesToProcess = t.cut(cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY);
       } else {
-          if (t.isVertexBelow(t.v1, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
+        if (t.isVertexBelow(t.v1, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
             t.isVertexBelow(t.v2, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY) &&
             t.isVertexBelow(t.v3, cutoff * radius, cutoffAngleZ, cutoffAngleX, cutoffAngleY)) {
-            int idx1 = vertexMap.get(t.v1);
-            int idx2 = vertexMap.get(t.v2);
-            int idx3 = vertexMap.get(t.v3);
-            faceList.add("3;" + idx1 + "," + idx2 + "," + idx3 + ";");
-            faceList.add("3;" + idx3 + "," + idx2 + "," + idx1 + ";");
+          trianglesToProcess.add(t);
+        }
+      }
+    
+      for (Triangle ct : trianglesToProcess) {
+        int idx1 = vertexMap.get(ct.v1);
+        int idx2 = vertexMap.get(ct.v2);
+        int idx3 = vertexMap.get(ct.v3);
+    
+        // Вычисляем нормаль
+        PVector edge1 = PVector.sub(ct.v2, ct.v1);
+        PVector edge2 = PVector.sub(ct.v3, ct.v1);
+        PVector normal = edge1.cross(edge2).normalize();
+    
+        // Центр треугольника
+        PVector center = new PVector(
+          (ct.v1.x + ct.v2.x + ct.v3.x) / 3.0,
+          (ct.v1.y + ct.v2.y + ct.v3.y) / 3.0,
+          (ct.v1.z + ct.v2.z + ct.v3.z) / 3.0
+        );
+    
+        // Вектор от центра сферы к треугольнику
+        PVector toCenter = center.copy().normalize();
+    
+        // Инвертируем индексы, если нормаль смотрит внутрь
+        if (normal.dot(toCenter) < 0) {
+          faceList.add("3;" + idx3 + "," + idx2 + "," + idx1 + ";");
+        } else {
+          faceList.add("3;" + idx1 + "," + idx2 + "," + idx3 + ";");
         }
       }
     }
@@ -218,7 +254,7 @@ void exportToX(String filePath) {
     // Записываем грани
     output.println("  " + faceList.size() + ";");
     for (int i = 0; i < faceList.size(); i++) {
-      output.println("  " + faceList.get(i) + (i == faceList.size() - 1 ? "" : ","));
+      output.println("  " + faceList.get(i) + (i == faceList.size() - 1 ? ";" : ","));
     }
 
     // Добавляем MeshMaterialList
@@ -230,12 +266,13 @@ void exportToX(String filePath) {
     }
     output.println();
     
+    
     // Добавляем Material
     output.println("  Material {");
-    output.println("    0.0; 1.0; 0.0; 0.75;;"); // Зеленый цвет, 75% прозрачности
-    output.println("    0.2;"); // Specular power (для выделения граней)
-    output.println("    0.2; 0.2; 0.2;;"); // Ambient
-    output.println("    0.8; 0.8; 0.8;;"); // Specular (яркость граней)
+    output.println("    1.0; 1.0; 1.0; 1.0;;"); // Зеленый цвет, 75% прозрачности
+    output.println("    0.0;"); // Specular power (для выделения граней)
+    output.println("    0.0; 0.0; 0.0;;"); // Ambient
+    output.println("    0.0; 0.0; 0.0;;"); // Specular (яркость граней)
     output.println("  }");
     output.println("}"); // Закрываем MeshMaterialList
     output.println("}"); // Закрываем Mesh

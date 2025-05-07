@@ -38,7 +38,7 @@ void setupGUI() {
     .setPosition(5, 55)
     .setSize(140, 20)
     .setRange(1, 100)
-    .setValue(20)
+    .setValue(30)
     .setGroup(parameters)
     .onChange(new CallbackListener() {
       public void controlEvent(CallbackEvent event) {
@@ -325,6 +325,7 @@ CallbackListener handleInteraction = e -> {
   };
 
 // Обработка изменений параметров
+// Обработка параметров detail, cutoff, radius
 void controlEvent(ControlEvent event) {
   if (event.isFrom("detail") || event.isFrom("cutoff") || event.isFrom("radius")) {
     detail = (int)cp5.getController("detail").getValue();
@@ -335,31 +336,38 @@ void controlEvent(ControlEvent event) {
     cp5.get(Textfield.class, "radius_text").setText(str((float)radius));
     createDome();
   }
+  // Обработка параметров cutoffAngleZ, cutoffAngleY, cutoffAngleX
   if (event.isFrom("cutoffAngleZ") || event.isFrom("cutoffAngleY") || event.isFrom("cutoffAngleX")) {
     cutoffAngleZ = radians(cp5.getController("cutoffAngleZ").getValue());
     cutoffAngleX = radians(cp5.getController("cutoffAngleX").getValue());
     cutoffAngleY = radians(cp5.getController("cutoffAngleY").getValue());
     
-    // Обновляем текстовые поля (в градусах!)
+    // Обновляем текстовые поля (в градусах)
     cp5.get(Textfield.class, "cutoffAngleZ_text").setText(str(cp5.getController("cutoffAngleZ").getValue()));
     cp5.get(Textfield.class, "cutoffAngleX_text").setText(str(cp5.getController("cutoffAngleX").getValue()));
     cp5.get(Textfield.class, "cutoffAngleY_text").setText(str(cp5.getController("cutoffAngleY").getValue()));
     
     createDome();
   }
+  // Обработка параметров showEdges, smoothEdges
   if (event.isFrom("showEdges") || event.isFrom("smoothEdges")) {
     showEdges = cp5.getController("showEdges").getValue() == 1;
     smoothEdges = cp5.getController("smoothEdges").getValue() == 1;
   }
+  // Обработка параметра radio_g1
   if(event.isFrom("radio_g1")) {
     polyhedronType = event.getValue() == 1.0 ? "octahedron" : "icosahedron";
     createDome();
   }
+  // Обработка параметра radio_g2
    if(event.isFrom("radio_g2")) {
     detailingType = event.getValue() == 1.0 ? "alternate" : "recursionMethod";
     createDome();
   }
-   if (event.isFrom(cp5.get(Textfield.class, "detail_text")) || event.isFrom(cp5.get(Textfield.class, "cutoff_text")) || event.isFrom(cp5.get(Textfield.class, "radius_text"))) {
+  //Обработка изменений значений текстовых полей, синхронизация их со слайдерами
+   if (event.isFrom(cp5.get(Textfield.class, "detail_text")) || 
+       event.isFrom(cp5.get(Textfield.class, "cutoff_text")) || 
+       event.isFrom(cp5.get(Textfield.class, "radius_text"))) {
         try {
           int newdetail = Integer.parseInt(cp5.get(Textfield.class, "detail_text").getText());
           float newcutoff = Float.parseFloat(cp5.get(Textfield.class, "cutoff_text").getText());
@@ -387,7 +395,6 @@ void controlEvent(ControlEvent event) {
     if (event.isFrom(cp5.get(Textfield.class, "cutoffAngleZ_text")) || 
         event.isFrom(cp5.get(Textfield.class, "cutoffAngleX_text")) || 
         event.isFrom(cp5.get(Textfield.class, "cutoffAngleY_text"))) {
-        
         try {
             float newAngleZ = Float.parseFloat(cp5.get(Textfield.class, "cutoffAngleZ_text").getText());
             float newAngleX = Float.parseFloat(cp5.get(Textfield.class, "cutoffAngleX_text").getText());
@@ -411,7 +418,7 @@ void controlEvent(ControlEvent event) {
             cp5.get(Textfield.class, "cutoffAngleY_text").setText(str(cp5.getController("cutoffAngleY").getValue()));
         }
     }
-      
+   // Обработка параметров color, alpha, stroke
    if (event.isFrom("color") || event.isFrom("alpha") || event.isFrom("stroke")) {
     colorDome = (int)cp5.getController("color").getValue();
     transparencyDome = (int)cp5.getController("alpha").getValue();
